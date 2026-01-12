@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  clarity-pipelines resources
+  Sample SAM Template for clarity-pipeline-lambdas
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace for resource naming patterns (project name)
+    Default: clarity-pipelines
+  Platform:
+    Type: String
+    Description: Which environment do you want to deploy to?
+    Default: prod
+  AccountID:
+    Type: String
+    Description: What is the AWS Account ID for those resources ?
+    Default: 127824203942
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 3072
+
+Resources:
+  PlatformLambdaRole: 
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${Namespace}-${Platform}-lambda-role"
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          -
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "lambda.amazonaws.com"
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  PlatformStepFunctionRole: 
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${Namespace}-${Platform}-stepfunction-role"
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          -
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "states.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  PlatformLambdaRolePolicy: 
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: !Sub "${Namespace}-${Platform}-policy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Action: "s3:*"
+            Resource:
+              - !Sub "arn:aws:s3:::${Namespace}-${Platform}-*"
+              - !Sub "arn:aws:s3:::clarity-backend-prod*"   
+              - !Sub "arn:aws:s3:::clarity-metadata*"
+              
+                 
+          - Effect: "Allow"
+            Action: "lambda:InvokeFunction"
+            Resource: !Sub "arn:aws:lambda:eu-west-3:${AccountID}:function:${Namespace}-${Platform}-*"
+          - Effect: "Allow"
+            Action: "states:*"
+            Resource: !Sub "arn:aws:states:eu-west-3:${AccountID}:stateMachine:${Namespace}-${Platform}-*"
+          - Effect: "Allow"
+            Action: "states:ListStateMachines"
+            Resource: !Sub "arn:aws:states:eu-west-3:${AccountID}:stateMachine:*"
+          - Effect: "Allow"
+            Action: "athena:*"
+            Resource:
+              - !Sub "arn:aws:athena:eu-west-3:${AccountID}:workgroup/${Namespace}-${Platform}"
+              #- !Sub "arn:aws:athena:eu-west-3:127824203942:datacatalog/WebTechData"
+
+          - Effect: "Allow"
+            Action:
+              - "events:PutTargets"
+              - "events:PutRule"
+              - "events:DescribeRule"
+            Resource: !Sub "arn:aws:events:eu-west-3:${AccountID}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule"
+          - Effect: "Allow"
+            Action:
+            - "glue:*"
+            Resource:
+              - !Sub "arn:aws:glue:eu-west-3:${AccountID}:catalog"
+              - !Sub "arn:aws:glue:eu-west-3:${AccountID}:crawler/${Namespace}-${Platform}-*"
+              - !Sub "arn:aws:glue:eu-west-3:${AccountID}:database/${Namespace}-${Platform}"
+              - !Sub "arn:aws:glue:eu-west-3:${AccountID}:table/${Namespace}-${Platform}/*"
+              
+              - !Sub "arn:aws:glue:eu-west-3:127824203942:table"
+              - !Sub "arn:aws:glue:eu-west-3:127824203942:database/clarity-*"
+              - !Sub "arn:aws:glue:eu-west-3:127824203942:database/clarity-prod"
+              - !Sub "arn:aws:glue:eu-west-3:127824203942:table/clarity-prod/*"
+              - !Sub "arn:aws:glue:eu-west-3:127824203942:database/clarity-metadata"
+              - !Sub "arn:aws:glue:eu-west-3:127824203942:table/clarity-metadata/*"
+              #- !Sub "arn:aws:glue:eu-west-3:127824203942:catalog"
+            
+          - Effect: "Allow"
+            Action:
+              - "iam:GetRole"
+              - "iam:PassRole"
+            Resource:
+              - !GetAtt PlatformLambdaRole.Arn
+              - !GetAtt PlatformStepFunctionRole.Arn
+          - Effect: "Allow"
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource:
+              - "*"
+      Roles: 
+        - Ref: "PlatformLambdaRole"
+        - Ref: "PlatformStepFunctionRole"
+
+  GetQuery:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "${Namespace}-${Platform}-get-query"
+      Role: !GetAtt PlatformLambdaRole.Arn
+      CodeUri: ./
+      Handler: lambdas.getQuery
+      Runtime: nodejs18.x
+  DeployPipeline:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "${Namespace}-${Platform}-deploy-pipeline"
+      Role: !GetAtt PlatformLambdaRole.Arn
+      CodeUri: ./
+      Handler: lambdas.deployPipeline
+      Runtime: nodejs18.x
+  CleanUpTable:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "${Namespace}-${Platform}-clean-up-table"
+      Role: !GetAtt PlatformLambdaRole.Arn
+      CodeUri: ./
+      Handler: lambdas.cleanUpTable
+      Runtime: nodejs18.x
+  UpdateTable:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "${Namespace}-${Platform}-update-table"
+      Role: !GetAtt PlatformLambdaRole.Arn
+      CodeUri: ./
+      Handler: lambdas.updateTable
+      Runtime: nodejs18.x
+
+Outputs:
+  PlatformLambdaRole:
+    Value: !GetAtt PlatformLambdaRole.Arn
+  PlatformStepFunctionRole:
+    Value: !GetAtt PlatformStepFunctionRole.Arn
+  GetQuery:
+    Value: !GetAtt GetQuery.Arn
+  DeployPipeline:
+    Value: !GetAtt DeployPipeline.Arn
+  CleanUpTable:
+    Value: !GetAtt CleanUpTable.Arn
+  

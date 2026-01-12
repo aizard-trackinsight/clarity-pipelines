@@ -1,0 +1,21 @@
+{
+  "Version" : "2012-10-17",
+  "Statement" : [ 
+  {
+    "Effect": "Allow",
+    "Principal": {
+        "AWS": [
+            "arn:aws:iam::468026092395:user/arnaud-izard-central",
+            "arn:aws:iam::468026092395:role/trackcentral-data-prod"
+        ]
+    },
+    "Action": [
+      "s3:Get*",
+      "s3:List*"
+    ],
+    "Resource": [
+        "arn:aws:s3:::clarity-pipelines-saturn-target/*",
+        "arn:aws:s3:::clarity-pipelines-saturn-target"
+    ]
+  }]
+}

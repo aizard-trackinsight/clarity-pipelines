@@ -1,0 +1,19 @@
+{
+  "Effect": "Allow",
+  "Principal": {
+      "AWS": [
+          "arn:aws:iam::468026092395:user/arnaud-izard-central",
+          "arn:aws:iam::468026092395:role/trackcentral-data-prod",
+          "arn:aws:iam::127824203942:role/clarity-pipelines-saturn-stepfunction-role",
+          "arn:aws:iam::127824203942:role/clarity-pipelines-saturn-lambda-role"
+      ]
+  },
+  "Action": [
+    "s3:Get*",
+    "s3:List*"
+  ],
+  "Resource": [
+      "arn:aws:s3:::clarity-backend-prod/*",
+      "arn:aws:s3:::clarity-backend-prod"
+  ]
+}

@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  An auxiliary stack to initialize retained resources (that we don't want to be managed by the main stack).
+  Mainly to ease the creation of necessary S3 buckets, while not having them removable by Cloudformation when removing the main stack
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace for resource naming patterns (project name)
+    Default: clarity-pipelines
+  Platform:
+    Type: String
+    Description: Which environment do you want to deploy to?
+    Default: PLATFORM
+
+Resources:
+  AthenaBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: "Retain"
+    Properties:
+      BucketName:  !Sub "${Namespace}-${Platform}-athena"
+  SourceBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: "Retain"
+    Properties:
+      BucketName:  !Sub "${Namespace}-${Platform}-source"
+  TargetBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: "Retain"
+    Properties:
+      BucketName:  !Sub "${Namespace}-${Platform}-target"
+  Database:
+    Type: AWS::Glue::Database
+    DeletionPolicy: "Retain"
+    Properties: 
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput: 
+        Name: !Sub "${Namespace}-${Platform}"
+  AthenaWorkgroup:
+    Type: AWS::Athena::WorkGroup
+    DeletionPolicy: "Retain"
+    Properties: 
+      Name: !Sub "${Namespace}-${Platform}"
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: False
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${Namespace}-${Platform}-athena/"
+
+Outputs:
+  AthenaBucket:
+    Value: !GetAtt AthenaBucket.Arn
+  SourceBucket:
+    Value: !GetAtt SourceBucket.Arn
+  TargetBucket:
+    Value: !GetAtt TargetBucket.Arn

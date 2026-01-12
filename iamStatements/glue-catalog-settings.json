@@ -1,0 +1,18 @@
+{
+  "Version" : "2012-10-17",
+  "Statement" : [ {
+    "Effect" : "Allow",
+    "Principal" : {
+      "AWS" : [ 
+        "arn:aws:iam::127824203942:role/clarity-pipelines-saturn-lambda-role",
+        "arn:aws:iam::127824203942:role/clarity-pipelines-saturn-stepfunction-role"
+      ]
+    },
+    "Action" : "glue:*",
+    "Resource" : [
+      "arn:aws:glue:eu-west-3:127824203942:catalog",
+      "arn:aws:glue:eu-west-3:127824203942:database/*",
+      "arn:aws:glue:eu-west-3:127824203942:table/*"
+    ]
+  }]
+}

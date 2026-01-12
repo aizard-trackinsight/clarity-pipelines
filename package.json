@@ -1,0 +1,30 @@
+{
+  "name": "@trackinsight/clarity-pipelines",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "deployPipeline": "node deployPipeline.js",
+    "release": "standard-version && git push --follow-tags origin main && npm publish"
+  },
+  "keywords": [],
+  "author": "Arnaud Izard",
+  "license": "ISC",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "standard-version": "^9.5.0"
+  },
+  "dependencies": {
+    "@trackinsight/friday": "^1.0.2",
+    "@trackinsight/steep": "^1.6.4",
+    "aws-sdk": "^2.1395.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trackinsight/clarity-pipelines.git"
+  }
+}
