@@ -41,7 +41,7 @@ const pathTypes = {
     'home':'^/?$',
     'segment':'^/segments/',
     'segments-home':'^/segments$',
-    'screener':'^/etf-screener',
+    'screener':'^/etf-screener', 
     'fund':'^/fund/',
     'etf-u':'^/etf-u',
     'news-home':'^/news$',
@@ -52,7 +52,10 @@ const pathTypes = {
     'columns':'^/columns',
     'topics':'^/topics',
     'funds-home':'^/fund$',
-    'compare':'^/compare-etfs'
+    'compare':'^/compare-etfs',
+    'model-portfolios':'^/model-portfolios',
+    'portfolios':'^/portfolios',
+    'portfolios-landing':'^/etf-portfolio-builder'
 
   },
   'etfmarket.cboe.ca':{
